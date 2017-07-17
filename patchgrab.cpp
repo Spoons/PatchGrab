@@ -19,13 +19,13 @@ class Image {
             x_ = x;
             y_ = y;
             n_ = n;
-            const size_t dim_array[3]={y,x,n};
+            const int dim_array[3]={y,x,n};
             m_rgb_ = mxCreateNumericArray(3, dim_array, mxUINT8_CLASS, mxREAL);
             rgb_ = (uint8_t*)mxGetData(m_rgb_);
         }
 
         Image(const mxArray *input) {
-            const size_t * dims = mxGetDimensions(input);
+            const int * dims = mxGetDimensions(input);
             y_ = dims[0];
             x_ = dims[1];
             n_ = dims[2];
@@ -54,9 +54,8 @@ class WorkOrder {
        }
 
        WorkOrder(const mxArray * input) {
-            mxArray *m_ptr = mxGetField(input,0,"num_patches");
-            num_patches_ = *(int*)mxGetData(m_ptr);
-            m_ptr = mxGetField(input,0,"x");
+			mxArray * m_ptr = mxGetField(input,0,"x");
+			num_patches_ = mxGetM(m_ptr);
             x_ = (int*)mxGetData(m_ptr);
             m_ptr = mxGetField(input,0,"y");
             y_ = (int*)mxGetData(m_ptr);
@@ -86,8 +85,7 @@ class Results {
 void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] )
 {
     Image frame(prhs[0]);
-    printf("x: %i", frame.x_);
-    //WorkOrder work(prhs[1]);
+    WorkOrder work(prhs[1]);
 
-    //Results patches(work);
+    Results patches(work);
 }

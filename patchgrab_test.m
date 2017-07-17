@@ -1,9 +1,11 @@
-x = [10, 20];
-y = [20, 30];
-theta = [0, 0];
+x = [10, 20, 55];
+y = [20, 30,55];
+theta = [0, 0, 9];
 
 workorder = struct('x', x, 'y', y, 'theta', theta);
 
 
 frame = imread('cat.jpeg');
-patchgrab(frame);
+tic;
+patchgrab(frame, workorder);
+toc;
