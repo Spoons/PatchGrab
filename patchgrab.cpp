@@ -2,6 +2,10 @@
 #include <cstdint>
 #include <vector>
 
+//! Image class represents a matlab image
+// Preferred to be iniatilized using a mxArray pointer.
+// Alternatively, if inited by x,y,n, then image class
+// will allocate memory on the matlab stack for you.
 class Image {
     public:
         int x_, y_, n_;
@@ -35,6 +39,9 @@ class Image {
         }
 };
 
+//! WorkOrder class represents a list of patches to be grabbed from a specific
+//frame. It is always initialized from an mxarray pointer to the workorder
+//matlab structure.
 class WorkOrder {
     public:
        int num_patches_;
@@ -65,11 +72,15 @@ class WorkOrder {
 
 };
 
+//! Results class represents a memory space for the returned patches to be
+//stored. Always initialize results with workorder and the associated results
+//class will store the results in its vector array.
 class Results {
     public:
         int num_results_;
         bool ready;
-        WorkOrder * work_order_; std::vector<Image> patches;
+        WorkOrder * work_order_; 
+        std::vector<Image> patches;
 
         Results(WorkOrder & in) {
             work_order_ = &in;
@@ -84,8 +95,13 @@ class Results {
 
 void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] )
 {
+    //! Creates an image object from a matlab image
     Image frame(prhs[0]);
+
+    //! Initialized the workorder object using the workorder struct from matlab
     WorkOrder work(prhs[1]);
 
+    //! Inializing results with the workload object will allocate memory in the
+    //results vector patches
     Results patches(work);
 }
