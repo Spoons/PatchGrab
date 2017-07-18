@@ -11,5 +11,5 @@ workorder = struct('x', x, 'y', y, 'xsize', xsize, 'ysize', ysize, 'theta', thet
 
 frame = imread('cat.jpeg');
 tic;
-results = patchgrab(frame, workorder);
+patchgrab(frame, workorder);
 toc;

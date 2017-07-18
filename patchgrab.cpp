@@ -1,6 +1,7 @@
 #include "mex.h"
 #include <cstdint>
 #include <vector>
+#include <cmath>
 
 //! Image class represents a matlab image
 // Preferred to be iniatilized using a mxArray pointer.
@@ -61,7 +62,7 @@ class WorkOrder {
     public:
        int num_patches_;
        bool completed;
-       int *x_, *y_, *xsize, *ysize, *theta_;
+       int *x_, *y_, *xsize_, *ysize_, *theta_;
        Image * frame_;
 
        WorkOrder(int num_patch, int * x, int * y, int * theta,
@@ -125,8 +126,8 @@ int grabPatches(Image frame, const WorkOrder &work, Results &results) {
 
 
     //uint8_t * frame_rgb = frame.rgb_;
-    //int x_frame_size = frame.x_;
-    //int y_frame_size = frame.y_;
+    int x_frame_size = frame.x_;
+    int y_frame_size = frame.y_;
 
     for (int i = 0; i < num_patches; ++i) {
         double theta = work.theta_[i]*(M_PI/180);
