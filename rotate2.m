@@ -17,8 +17,8 @@ function patch=patch_grab(x,y,theta)
     yhalf = round((1/2)*ysize); 
     xhalf = round((1/2)*xsize);
     
-    xposhalf = round(xpos*(1/2));
-    yposhalf = round(ypos*(1/2));
+    %xposhalf = round(xpos*(1/2));
+    %yposhalf = round(ypos*(1/2));
     
     bound_hit = 0;
     pix_hit = 0;
