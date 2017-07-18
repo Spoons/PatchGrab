@@ -104,4 +104,6 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] )
     //! Inializing results with the workload object will allocate memory in the
     //results vector patches
     Results patches(work);
+
+
 }
