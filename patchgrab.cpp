@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <vector>
 #include <cmath>
+#include <omp.h>
 
 //! Image class represents a matlab image
 // Preferred to be iniatilized using a mxArray pointer.
@@ -149,11 +150,14 @@ int grabPatches(const WorkOrder &work, Results &results) {
 
 
     //uint8_t * frame_rgb = frame.rgb_;
-    int x_frame_size = frame.x_;
-    int y_frame_size = frame.y_;
+    const int x_frame_size = frame.x_;
+    const int y_frame_size = frame.y_;
 
     int i;
+
+#pragma omp parallel for private(i)
     for (int i = 0; i < num_patches; i++) {
+        //mexPrintf("num_threads: %i\n", omp_get_num_threads());
         double theta = work.theta_[i]*(M_PI/180);
         int x_size_half = work.xsize_[i]/2;
         int y_size_half = work.ysize_[i]/2;
@@ -168,7 +172,7 @@ int grabPatches(const WorkOrder &work, Results &results) {
         int y_pos = work.y_[i];
 
         //uint8_t *patch_rgb = results.patches[i].rgb_;
-
+//#pragma omp collapse(2)
         for (int y = y_pos-y_size_half; y < y_pos+y_size_half; y++) {
             for(int x = x_pos-x_size_half; x < x_pos+x_size_half; x++) {
                 int tx = x;
