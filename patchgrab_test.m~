@@ -1,0 +1,14 @@
+x = int32([10, 20,55,]);
+y = int32([20, 30,55,]);
+
+xsize = int32([300,300,300]);
+ysize = int32([200,200,200]);
+
+theta = int32([0, 0, 9]);
+
+frame = imread('cat.jpeg');
+workorder = struct('frame', frame, 'x', x, 'y', y, 'xsize', xsize, 'ysize', ysize, 'theta', theta);
+
+tic;
+output = patchgrab(workorder);
+toc;

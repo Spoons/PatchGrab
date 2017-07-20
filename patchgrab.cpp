@@ -7,9 +7,11 @@
 // Preferred to be iniatilized using a mxArray pointer.
 // Alternatively, if inited by x,y,n, then image class
 // will allocate memory on the matlab stack for you.
+
+#define M_PI 3.141592653589793238462643383279502884197169399375105820974944592307816406286
 class Image {
     public:
-        int x_, y_, n_;
+        int32_t x_, y_, n_;
         uint8_t * rgb_;
         const mxArray * m_rgb_;
         Image(const int x, const int y, const int n, uint8_t * rgb) {
@@ -24,13 +26,13 @@ class Image {
             x_ = x;
             y_ = y;
             n_ = n;
-            const size_t dim_array[3]={y,x,n};
+            const mwSize dim_array[3]={y,x,n};
             m_rgb_ = mxCreateNumericArray(3, dim_array, mxUINT8_CLASS, mxREAL);
             rgb_ = (uint8_t*)mxGetData(m_rgb_);
         }
 
         Image(const mxArray *input) {
-            const size_t * dims = mxGetDimensions(input);
+            const mwSize * dims = mxGetDimensions(input);
             y_ = dims[0];
             x_ = dims[1];
             n_ = dims[2];
@@ -48,8 +50,10 @@ class Image {
             int other_pixel_position = x_other*(other.y_) + y_other;
 
             rgb_[this_pixel_position] = other.rgb_[other_pixel_position];
+
             rgb_[this_pixel_position + this_frame_size] =
                 other.rgb_[other_pixel_position + other_frame_size];
+
             rgb_[this_pixel_position + 2*this_frame_size] =
                 other.rgb_[other_pixel_position + 2*other_frame_size];
         }
@@ -62,7 +66,7 @@ class WorkOrder {
     public:
        int num_patches_;
        bool completed;
-       int *x_, *y_, *xsize_, *ysize_, *theta_;
+       int32_t *x_, *y_, *xsize_, *ysize_, *theta_;
        Image * frame_;
 
        WorkOrder(int num_patch, int * x, int * y, int * theta,
@@ -78,11 +82,14 @@ class WorkOrder {
 
        WorkOrder(const mxArray * input) {
 			mxArray * m_ptr = mxGetField(input,0,"x");
-			num_patches_ = mxGetM(m_ptr);
+			num_patches_ = mxGetN(m_ptr);
+            //mexPrintf("num elements: %i", num_patches_);
             x_ = (int*)mxGetData(m_ptr);
 
             m_ptr = mxGetField(input,0,"y");
             y_ = (int*)mxGetData(m_ptr);
+            
+            //mexPrintf("y[0]: %i", y_[1]);
 
             m_ptr = mxGetField(input,0,"xsize");
             xsize_ = (int*)mxGetData(m_ptr);
@@ -93,6 +100,9 @@ class WorkOrder {
             
             m_ptr = mxGetField(input,0,"theta");
             theta_ = (int*)mxGetData(m_ptr);
+
+            m_ptr = mxGetField(input,0,"frame");
+            frame_ = new Image(m_ptr);
        }
 
 };
@@ -113,23 +123,37 @@ class Results {
 
             patches.reserve(num_results_);
             for (int i = 0; i < num_results_; ++i) {
-                patches.push_back(Image(in.x_[i], in.y_[i], 3)); 
+                patches.push_back(Image(in.xsize_[i], in.ysize_[i], 3)); 
             }   
+        }
+
+        mxArray * toMatlabStruct() {
+            const char *fieldname[] = {"patch"};
+            mxArray * results_struct = mxCreateStructMatrix(num_results_, 1, 1, fieldname);
+
+            for (int i = 0; i<num_results_;++i) {
+                mxSetField(results_struct, i, "patch", (mxArray*)patches[i].m_rgb_); 
+
+            }   
+
+            return results_struct;
         }
 };
 
-int grabPatches(Image frame, const WorkOrder &work, Results &results) {
+//! Performs actual patch grabbing computation. 
+int grabPatches(const WorkOrder &work, Results &results) {
 
     int num_patches = work.num_patches_;
 
-    int i;
+    const Image & frame = *work.frame_;
 
 
     //uint8_t * frame_rgb = frame.rgb_;
     int x_frame_size = frame.x_;
     int y_frame_size = frame.y_;
 
-    for (int i = 0; i < num_patches; ++i) {
+    int i;
+    for (int i = 0; i < num_patches; i++) {
         double theta = work.theta_[i]*(M_PI/180);
         int x_size_half = work.xsize_[i]/2;
         int y_size_half = work.ysize_[i]/2;
@@ -145,8 +169,8 @@ int grabPatches(Image frame, const WorkOrder &work, Results &results) {
 
         //uint8_t *patch_rgb = results.patches[i].rgb_;
 
-        for (int y = y_pos-y_size_half; y < y_pos+y_size_half; ++y) {
-            for(int x = x_pos-x_size_half; x < x_pos+x_size_half; ++x) {
+        for (int y = y_pos-y_size_half; y < y_pos+y_size_half; y++) {
+            for(int x = x_pos-x_size_half; x < x_pos+x_size_half; x++) {
                 int tx = x;
                 int ty = y;
 
@@ -166,7 +190,7 @@ int grabPatches(Image frame, const WorkOrder &work, Results &results) {
                 }
                 
 
-                results.patches[i].SetPixel(rtx, rty, frame, tx, ty);
+                results.patches[i].SetPixel(tx, ty, frame, rtx, rty);
 
             }
 
@@ -179,18 +203,20 @@ int grabPatches(Image frame, const WorkOrder &work, Results &results) {
 
 void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] )
 {
-    //! Creates an image object from a matlab image
-    Image frame(prhs[0]);
-
     //! Initialized the workorder object using the workorder struct from matlab
-    WorkOrder work(prhs[1]);
+	WorkOrder work(prhs[0]);
 
     //! Inializing results with the workload object will allocate memory in the
     //results vector patches
     Results result(work);
 
     //This method actually perfoms the patch grabbing
-    grabPatches(frame, work, result);
+    grabPatches(work, result);
+
+
+    plhs[0] = result.toMatlabStruct();
+
+
 }
 
 
